@@ -310,7 +310,7 @@ function WaiterDashboard() {
   const filteredMenuData = menuData
     .map((category) => {
       const filteredItems = category.items.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
       return { ...category, items: filteredItems };
     })
