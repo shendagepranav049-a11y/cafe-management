@@ -37,6 +37,10 @@ h1 {
     grid-template-columns: 1fr !important;
     gap: 20px !important;
   }
+  
+  .dashboard-page {
+    padding-bottom: 100px !important;
+  }
 }
 
 /* Dashboard Headers */
