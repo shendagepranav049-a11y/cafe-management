@@ -3,7 +3,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -34,16 +34,43 @@ function AdminLogin() {
 
       const user = userCredential.user;
 
-      const userDocRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userDocRef);
+      let userData = null;
 
-      if (!userDoc.exists()) {
-        await signOut(auth);
-        toast.error("User role not found.");
-        return;
+      // 1. Try 'users' collection by email
+      const usersRef = collection(db, "users");
+      const qUsers = query(usersRef, where("email", "==", email));
+      let snapshot = await getDocs(qUsers);
+      
+      if (!snapshot.empty) {
+        userData = snapshot.docs[0].data();
+      } else {
+        // 2. Try 'user' collection by email
+        const userRef = collection(db, "user");
+        const qUser = query(userRef, where("email", "==", email));
+        snapshot = await getDocs(qUser);
+        
+        if (!snapshot.empty) {
+          userData = snapshot.docs[0].data();
+        } else {
+          // 3. Try 'users' collection by uid
+          const uDoc1 = await getDoc(doc(db, "users", user.uid));
+          if (uDoc1.exists()) {
+            userData = uDoc1.data();
+          } else {
+            // 4. Try 'user' collection by uid
+            const uDoc2 = await getDoc(doc(db, "user", user.uid));
+            if (uDoc2.exists()) {
+              userData = uDoc2.data();
+            }
+          }
+        }
       }
 
-      const userData = userDoc.data();
+      if (!userData) {
+        await signOut(auth);
+        toast.error("User role not found in database.");
+        return;
+      }
 
       if (userData.role !== "admin") {
         await signOut(auth);
