@@ -3,6 +3,7 @@ import {
   collection,
   onSnapshot,
   updateDoc,
+  deleteDoc,
   doc,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
@@ -13,10 +14,10 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
-  const [paymentMethods, setPaymentMethods] = useState({});
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(true);
 
+  // ADMIN AUTH CHECK
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -29,6 +30,7 @@ function AdminDashboard() {
     return () => unsubscribe();
   }, [navigate]);
 
+  // LOAD ORDERS
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, "orders"),
@@ -50,11 +52,11 @@ function AdminDashboard() {
     return () => unsubscribe();
   }, []);
 
+  // COMPLETE ORDER
   const completeOrder = async (orderId) => {
     try {
       await updateDoc(doc(db, "orders", orderId), {
         status: "Completed",
-        paymentStatus: "Pending",
       });
 
       alert("Order Completed!");
@@ -64,24 +66,46 @@ function AdminDashboard() {
     }
   };
 
-  const markAsPaid = async (orderId) => {
-    const method = paymentMethods[orderId];
+  // DELETE COMPLETED ORDER
+  const deleteOrder = async (orderId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this completed order?"
+    );
 
-    if (!method) {
-      alert("Please select payment method first.");
+    if (!confirmDelete) {
       return;
     }
 
     try {
-      await updateDoc(doc(db, "orders", orderId), {
-        paymentStatus: "Paid",
-        paymentMethod: method,
-      });
+      await deleteDoc(doc(db, "orders", orderId));
 
-      alert("Payment marked as Paid!");
+      alert("Order Deleted Successfully!");
     } catch (error) {
-      console.error(error);
-      alert("Payment update करताना error आला.");
+      console.error("Delete order error:", error);
+      alert("Order delete करताना error आला.");
+    }
+  };
+
+  // FORMAT DATE
+  const formatOrderDate = (createdAt) => {
+    if (!createdAt) {
+      return "N/A";
+    }
+
+    try {
+      if (createdAt?.toDate) {
+        return createdAt.toDate().toLocaleString("en-IN");
+      }
+
+      const date = new Date(createdAt);
+
+      if (Number.isNaN(date.getTime())) {
+        return "N/A";
+      }
+
+      return date.toLocaleString("en-IN");
+    } catch (error) {
+      return "N/A";
     }
   };
 
@@ -125,6 +149,10 @@ function AdminDashboard() {
               font-weight: normal;
             }
 
+            .info {
+              margin-bottom: 8px;
+            }
+
             .item {
               display: flex;
               justify-content: space-between;
@@ -156,19 +184,14 @@ function AdminDashboard() {
 
           <h2>Restaurant Bill</h2>
 
-          <p>
-            <strong>Order:</strong>
-            #${order.id.slice(0, 6)}
-          </p>
-
-          <p>
+          <p class="info">
             <strong>Table:</strong>
             ${order.tableNumber || "N/A"}
           </p>
 
-          <p>
-            <strong>Payment:</strong>
-            ${order.paymentMethod || "N/A"}
+          <p class="info">
+            <strong>Date:</strong>
+            ${formatOrderDate(order.createdAt)}
           </p>
 
           <h3>Items</h3>
@@ -212,60 +235,65 @@ function AdminDashboard() {
     };
   };
 
+  // AUTH LOADING
   if (authLoading) {
     return (
       <div style={styles.center}>
         <div style={styles.loadingIcon}>☕</div>
-        <h2 style={styles.loadingTitle}>Checking Admin Login...</h2>
+        <h2 style={styles.loadingTitle}>
+          Checking Admin Login...
+        </h2>
       </div>
     );
   }
 
+  // ORDERS LOADING
   if (loading) {
     return (
       <div style={styles.center}>
         <div style={styles.loadingIcon}>☕</div>
-        <h2 style={styles.loadingTitle}>Orders Loading...</h2>
-        <p style={styles.loadingText}>Please wait...</p>
+        <h2 style={styles.loadingTitle}>
+          Orders Loading...
+        </h2>
+
+        <p style={styles.loadingText}>
+          Please wait...
+        </p>
       </div>
     );
   }
 
-  const pendingOrders = orders.filter(
-    (order) => order.status !== "Completed"
-  );
-
-  const completedOrders = orders.filter(
-    (order) => order.status === "Completed"
-  );
-
-  const paidOrders = orders.filter(
-    (order) => order.paymentStatus === "Paid"
-  );
-
-  const totalRevenue = paidOrders.reduce(
-    (sum, order) => sum + Number(order.total || 0),
-    0
-  );
-
+  // PENDING FIRST
   const sortedOrders = [...orders].sort((a, b) => {
-    if (a.status === "Completed" && b.status !== "Completed") return 1;
+    if (
+      a.status === "Completed" &&
+      b.status !== "Completed"
+    ) {
+      return 1;
+    }
 
-    if (a.status !== "Completed" && b.status === "Completed") return -1;
+    if (
+      a.status !== "Completed" &&
+      b.status === "Completed"
+    ) {
+      return -1;
+    }
 
     return 0;
   });
 
   return (
     <div style={styles.page}>
-      {/* HEADER */}
 
+      {/* HEADER */}
       <header style={styles.header}>
         <div style={styles.brandSection}>
           <div style={styles.logo}>☕</div>
 
           <div>
-            <h1 style={styles.title}>Cafe Admin</h1>
+            <h1 style={styles.title}>
+              Cafe Admin
+            </h1>
 
             <p style={styles.subtitle}>
               Restaurant Management Dashboard
@@ -280,7 +308,6 @@ function AdminDashboard() {
       </header>
 
       {/* WELCOME BAR */}
-
       <div style={styles.welcomeBox}>
         <div>
           <h2 style={styles.welcomeTitle}>
@@ -288,7 +315,7 @@ function AdminDashboard() {
           </h2>
 
           <p style={styles.welcomeText}>
-            Manage your restaurant orders, payments and daily operations.
+            Manage your restaurant orders and daily operations.
           </p>
         </div>
 
@@ -297,56 +324,7 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {/* STATS */}
-
-      <div style={styles.statsBox}>
-        <div style={styles.statCard}>
-          <div style={styles.statIcon}>📋</div>
-
-          <div style={styles.statContent}>
-            <span style={styles.statLabel}>Total Orders</span>
-            <strong style={styles.statNumber}>
-              {orders.length}
-            </strong>
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={styles.statIcon}>🔴</div>
-
-          <div style={styles.statContent}>
-            <span style={styles.statLabel}>Pending Orders</span>
-            <strong style={styles.statNumber}>
-              {pendingOrders.length}
-            </strong>
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={styles.statIcon}>✅</div>
-
-          <div style={styles.statContent}>
-            <span style={styles.statLabel}>Completed</span>
-            <strong style={styles.statNumber}>
-              {completedOrders.length}
-            </strong>
-          </div>
-        </div>
-
-        <div style={styles.statCard}>
-          <div style={styles.statIcon}>💰</div>
-
-          <div style={styles.statContent}>
-            <span style={styles.statLabel}>Revenue</span>
-            <strong style={styles.statNumber}>
-              ₹{totalRevenue}
-            </strong>
-          </div>
-        </div>
-      </div>
-
       {/* ORDERS TITLE */}
-
       <div style={styles.sectionHeader}>
         <div>
           <h2 style={styles.ordersTitle}>
@@ -357,17 +335,14 @@ function AdminDashboard() {
             Live restaurant orders
           </p>
         </div>
-
-        <div style={styles.orderCount}>
-          {orders.length} Orders
-        </div>
       </div>
 
       {/* ORDERS */}
-
       {sortedOrders.length === 0 ? (
         <div style={styles.emptyBox}>
-          <div style={styles.emptyIcon}>☕</div>
+          <div style={styles.emptyIcon}>
+            ☕
+          </div>
 
           <h3 style={styles.emptyTitle}>
             No Orders Yet
@@ -381,149 +356,120 @@ function AdminDashboard() {
         <div>
           {sortedOrders.map((order) => {
             const isNew = order.status !== "Completed";
+            const isCompleted =
+              order.status === "Completed";
 
             return (
               <div
                 key={order.id}
                 style={{
                   ...styles.orderCard,
+
                   border: isNew
                     ? "2px solid #b91c1c"
-                    : "1px solid #d8c7b5",
+                    : "2px solid #86a98b",
+
                   background: isNew
                     ? "#fffaf7"
-                    : "#fffdf9",
+                    : "#f8fff8",
                 }}
               >
-                {/* NEW BADGE */}
 
+                {/* NEW ORDER BADGE */}
                 {isNew && (
                   <div style={styles.newBadge}>
                     🔴 NEW ORDER
                   </div>
                 )}
 
-                {/* ORDER HEADER */}
-
-                <div style={styles.orderHeader}>
-                  <div>
-                    <p style={styles.orderSmallText}>
-                      ORDER
-                    </p>
-
-                    <h3 style={styles.orderNumber}>
-                      #{order.id.slice(0, 6)}
-                    </h3>
-                  </div>
-
-                  <span
-                    style={{
-                      ...styles.statusBadge,
-                      background:
-                        order.status === "Completed"
-                          ? "#dcfce7"
-                          : "#fee2e2",
-
-                      color:
-                        order.status === "Completed"
-                          ? "#166534"
-                          : "#991b1b",
-                    }}
-                  >
-                    {order.status === "Completed"
-                      ? "✓ Completed"
-                      : "● Pending"}
-                  </span>
-                </div>
-
-                {/* ORDER INFO */}
-
-                <div style={styles.infoGrid}>
-                  <div style={styles.infoBox}>
-                    <span style={styles.infoLabel}>
-                      TABLE
-                    </span>
-
-                    <strong style={styles.infoValue}>
-                      🪑 Table {order.tableNumber || "N/A"}
-                    </strong>
-                  </div>
-
-                  <div style={styles.infoBox}>
-                    <span style={styles.infoLabel}>
-                      PAYMENT
-                    </span>
-
-                    <strong style={styles.infoValue}>
-                      {order.paymentStatus === "Paid"
-                        ? "🟢 Paid"
-                        : "🟡 Pending"}
-                    </strong>
-                  </div>
-
-                  <div style={styles.infoBox}>
-                    <span style={styles.infoLabel}>
-                      DATE
-                    </span>
-
-                    <strong style={styles.infoValue}>
-                      {order.createdAt
-                        ? new Date(
-                            order.createdAt
-                          ).toLocaleString("en-IN")
-                        : "N/A"}
-                    </strong>
-                  </div>
-                </div>
-
-                {order.paymentMethod && (
-                  <div style={styles.paymentMethod}>
-                    💳 Payment Method:{" "}
-                    <strong>
-                      {order.paymentMethod}
-                    </strong>
+                {/* COMPLETED BADGE */}
+                {isCompleted && (
+                  <div style={styles.completedBadge}>
+                    ✅ COMPLETED
                   </div>
                 )}
 
-                {/* ITEMS */}
+                {/* ORDER INFO */}
+                <div style={styles.infoGrid}>
 
+                  {/* TABLE */}
+                  <div style={styles.infoBox}>
+                    <span style={styles.infoLabel}>
+                      TABLE NO.
+                    </span>
+
+                    <strong style={styles.infoValue}>
+                      🪑 Table{" "}
+                      {order.tableNumber || "N/A"}
+                    </strong>
+                  </div>
+
+                  {/* DATE */}
+                  <div style={styles.infoBox}>
+                    <span style={styles.infoLabel}>
+                      DATE & TIME
+                    </span>
+
+                    <strong style={styles.infoValue}>
+                      {formatOrderDate(
+                        order.createdAt
+                      )}
+                    </strong>
+                  </div>
+
+                </div>
+
+                {/* ITEMS */}
                 <div style={styles.itemsSection}>
                   <h4 style={styles.itemsTitle}>
                     🍽️ Order Items
                   </h4>
 
-                  {order.items?.map((item, index) => (
-                    <div
-                      key={index}
-                      style={styles.itemRow}
-                    >
-                      <div>
-                        <strong style={styles.itemName}>
-                          {item.name}
-                        </strong>
+                  {order.items?.map(
+                    (item, index) => (
+                      <div
+                        key={index}
+                        style={styles.itemRow}
+                      >
+                        <div>
+                          <strong
+                            style={styles.itemName}
+                          >
+                            {item.name}
+                          </strong>
 
-                        <span style={styles.itemVariant}>
-                          {item.variant}
-                        </span>
+                          <span
+                            style={styles.itemVariant}
+                          >
+                            {item.variant}
+                          </span>
+                        </div>
+
+                        <div
+                          style={styles.itemRight}
+                        >
+                          <span
+                            style={styles.quantity}
+                          >
+                            × {item.quantity}
+                          </span>
+
+                          <strong>
+                            ₹
+                            {item.price *
+                              item.quantity}
+                          </strong>
+                        </div>
                       </div>
-
-                      <div style={styles.itemRight}>
-                        <span style={styles.quantity}>
-                          × {item.quantity}
-                        </span>
-
-                        <strong>
-                          ₹{item.price * item.quantity}
-                        </strong>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
 
                 {/* TOTAL */}
-
                 <div style={styles.totalBox}>
-                  <span>Total Amount</span>
+                  <span>
+                    Total Amount
+                  </span>
 
                   <strong>
                     ₹{order.total}
@@ -531,7 +477,6 @@ function AdminDashboard() {
                 </div>
 
                 {/* COMPLETE BUTTON */}
-
                 {order.status !== "Completed" && (
                   <button
                     onClick={() =>
@@ -543,80 +488,9 @@ function AdminDashboard() {
                   </button>
                 )}
 
-                {/* PAYMENT */}
-
-                {order.status === "Completed" &&
-                  order.paymentStatus !== "Paid" && (
-                    <div style={styles.paymentBox}>
-                      <h4 style={styles.paymentTitle}>
-                        💳 Complete Payment
-                      </h4>
-
-                      <label style={styles.selectLabel}>
-                        Payment Method
-                      </label>
-
-                      <select
-                        value={
-                          paymentMethods[order.id] || ""
-                        }
-                        onChange={(e) =>
-                          setPaymentMethods({
-                            ...paymentMethods,
-                            [order.id]:
-                              e.target.value,
-                          })
-                        }
-                        style={styles.select}
-                      >
-                        <option value="" disabled>
-                          Select Payment Method
-                        </option>
-
-                        <option value="Cash">
-                          Cash
-                        </option>
-
-                        <option value="UPI">
-                          UPI
-                        </option>
-
-                        <option value="Card">
-                          Card
-                        </option>
-                      </select>
-
-                      <button
-                        onClick={() =>
-                          markAsPaid(order.id)
-                        }
-                        style={styles.paidButton}
-                      >
-                        💳 Mark as Paid
-                      </button>
-                    </div>
-                  )}
-
-                {/* PAID */}
-
-                {order.paymentStatus === "Paid" && (
-                  <div style={styles.paidBox}>
-                    <div style={styles.paidMessage}>
-                      <span style={styles.paidCheck}>
-                        ✓
-                      </span>
-
-                      <div>
-                        <strong>
-                          Payment Completed
-                        </strong>
-
-                        <p style={styles.paidSubtext}>
-                          Paid via{" "}
-                          {order.paymentMethod}
-                        </p>
-                      </div>
-                    </div>
+                {/* COMPLETED ACTIONS */}
+                {order.status === "Completed" && (
+                  <div style={styles.completedActions}>
 
                     <button
                       onClick={() =>
@@ -626,8 +500,19 @@ function AdminDashboard() {
                     >
                       🧾 Print Bill
                     </button>
+
+                    <button
+                      onClick={() =>
+                        deleteOrder(order.id)
+                      }
+                      style={styles.deleteButton}
+                    >
+                      🗑️ Delete Order
+                    </button>
+
                   </div>
                 )}
+
               </div>
             );
           })}
@@ -738,56 +623,8 @@ const styles = {
     fontSize: "55px",
   },
 
-  statsBox: {
-    maxWidth: "1200px",
-    margin: "0 auto 30px auto",
-    display: "grid",
-    gridTemplateColumns:
-      "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "16px",
-  },
-
-  statCard: {
-    background: "#fffaf3",
-    padding: "20px",
-    borderRadius: "16px",
-    boxShadow:
-      "0 6px 18px rgba(43,27,20,0.15)",
-    display: "flex",
-    alignItems: "center",
-    gap: "15px",
-  },
-
-  statIcon: {
-    width: "52px",
-    height: "52px",
-    borderRadius: "13px",
-    background: "#ead7c4",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "24px",
-  },
-
-  statContent: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-  },
-
-  statLabel: {
-    color: "#8a6a55",
-    fontSize: "13px",
-    fontWeight: "bold",
-  },
-
-  statNumber: {
-    color: "#3b2418",
-    fontSize: "25px",
-  },
-
   sectionHeader: {
-    maxWidth: "1200px",
+    maxWidth: "1150px",
     margin: "0 auto 18px auto",
     display: "flex",
     justifyContent: "space-between",
@@ -803,15 +640,6 @@ const styles = {
   sectionSubtitle: {
     margin: "5px 0 0 0",
     color: "#ead7c4",
-    fontSize: "13px",
-  },
-
-  orderCount: {
-    background: "#fffaf3",
-    color: "#4a2c20",
-    padding: "8px 14px",
-    borderRadius: "20px",
-    fontWeight: "bold",
     fontSize: "13px",
   },
 
@@ -833,53 +661,37 @@ const styles = {
     borderRadius: "20px",
     fontWeight: "bold",
     fontSize: "12px",
-    marginBottom: "12px",
+    marginBottom: "15px",
     letterSpacing: "0.4px",
   },
 
-  orderHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "18px",
-  },
-
-  orderSmallText: {
-    margin: 0,
-    color: "#9a7a64",
-    fontSize: "11px",
-    fontWeight: "bold",
-    letterSpacing: "1px",
-  },
-
-  orderNumber: {
-    margin: "4px 0 0 0",
-    color: "#3b2418",
-    fontSize: "22px",
-  },
-
-  statusBadge: {
-    padding: "8px 14px",
+  completedBadge: {
+    display: "inline-block",
+    background: "#166534",
+    color: "#fff",
+    padding: "7px 12px",
     borderRadius: "20px",
     fontWeight: "bold",
     fontSize: "12px",
+    marginBottom: "15px",
+    letterSpacing: "0.4px",
   },
 
   infoGrid: {
     display: "grid",
     gridTemplateColumns:
-      "repeat(auto-fit, minmax(180px, 1fr))",
+      "repeat(auto-fit, minmax(220px, 1fr))",
     gap: "12px",
-    marginBottom: "14px",
+    marginBottom: "15px",
   },
 
   infoBox: {
     background: "#f5eadc",
-    padding: "12px",
+    padding: "14px",
     borderRadius: "10px",
     display: "flex",
     flexDirection: "column",
-    gap: "5px",
+    gap: "6px",
   },
 
   infoLabel: {
@@ -891,16 +703,7 @@ const styles = {
 
   infoValue: {
     color: "#4a2c20",
-    fontSize: "13px",
-  },
-
-  paymentMethod: {
-    background: "#f0e4d6",
-    padding: "11px 14px",
-    borderRadius: "9px",
-    marginBottom: "15px",
-    fontSize: "13px",
-    color: "#5a3a29",
+    fontSize: "14px",
   },
 
   itemsSection: {
@@ -922,6 +725,7 @@ const styles = {
     alignItems: "center",
     padding: "11px 0",
     borderBottom: "1px solid #eee2d6",
+    gap: "15px",
   },
 
   itemName: {
@@ -942,6 +746,7 @@ const styles = {
     gap: "15px",
     alignItems: "center",
     color: "#4a2c20",
+    whiteSpace: "nowrap",
   },
 
   quantity: {
@@ -974,45 +779,19 @@ const styles = {
     fontWeight: "bold",
   },
 
-  paymentBox: {
+  completedActions: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: "12px",
     marginTop: "15px",
-    padding: "18px",
-    background: "#f5eadc",
-    borderRadius: "12px",
-    border: "1px solid #dfc8b1",
   },
 
-  paymentTitle: {
-    margin: "0 0 12px 0",
-    color: "#4a2c20",
-    fontSize: "15px",
-  },
-
-  selectLabel: {
-    display: "block",
-    color: "#6b4a38",
-    fontSize: "12px",
-    fontWeight: "bold",
-    marginBottom: "6px",
-  },
-
-  select: {
-    width: "100%",
-    padding: "11px",
-    borderRadius: "8px",
-    border: "1px solid #cdb39e",
-    background: "#fffaf3",
-    color: "#3b2418",
-    boxSizing: "border-box",
-    fontSize: "14px",
-  },
-
-  paidButton: {
+  printButton: {
     width: "100%",
     padding: "12px",
-    marginTop: "10px",
-    background: "#8b5e34",
-    color: "#fff",
+    background: "#3b2418",
+    color: "#fffaf3",
     border: "none",
     borderRadius: "8px",
     cursor: "pointer",
@@ -1020,45 +799,11 @@ const styles = {
     fontWeight: "bold",
   },
 
-  paidBox: {
-    marginTop: "15px",
-    padding: "16px",
-    background: "#edf7ed",
-    borderRadius: "12px",
-    border: "1px solid #b9d8b9",
-  },
-
-  paidMessage: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    color: "#166534",
-  },
-
-  paidCheck: {
-    width: "35px",
-    height: "35px",
-    borderRadius: "50%",
-    background: "#166534",
-    color: "#fff",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontWeight: "bold",
-  },
-
-  paidSubtext: {
-    margin: "3px 0 0 0",
-    fontSize: "12px",
-    color: "#4f7a4f",
-  },
-
-  printButton: {
+  deleteButton: {
     width: "100%",
     padding: "12px",
-    marginTop: "12px",
-    background: "#3b2418",
-    color: "#fffaf3",
+    background: "#b91c1c",
+    color: "#fff",
     border: "none",
     borderRadius: "8px",
     cursor: "pointer",
