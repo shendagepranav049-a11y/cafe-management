@@ -3,6 +3,7 @@ import { collection, getDocs, addDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 function WaiterDashboard() {
   const navigate = useNavigate();
@@ -102,7 +103,7 @@ function WaiterDashboard() {
     } catch (error) {
       console.error("Order history load error:", error);
 
-      alert(
+      toast.error(
         "Order history load करताना error आला: " +
           error.message
       );
@@ -152,6 +153,7 @@ function WaiterDashboard() {
         },
       ]);
     }
+    toast.success(`Added ${name} - ${variant} to order`, { duration: 1000 });
   };
 
   // Quantity decrease
@@ -193,12 +195,12 @@ function WaiterDashboard() {
   // Send order
   const sendOrderToAdmin = async () => {
     if (tableNumber === "") {
-      alert("Please select table number first.");
+      toast.error("Please select table number first.");
       return;
     }
 
     if (order.length === 0) {
-      alert("Please first add item to order.");
+      toast.error("Please first add item to order.");
       return;
     }
 
@@ -222,16 +224,17 @@ function WaiterDashboard() {
       setOrder([]);
       setTableNumber("");
 
-      alert(
+      toast.success(
         `Order Successfully Sent!\n\nOrder ID: ${orderId.slice(
           0,
           8
-        )}\nTable: ${newOrder.tableNumber}\nTotal: ₹${newOrder.total}`
+        )}\nTable: ${newOrder.tableNumber}\nTotal: ₹${newOrder.total}`,
+        { duration: 4000 }
       );
     } catch (error) {
       console.error("Order save error:", error);
 
-      alert(
+      toast.error(
         "Order save करताना error आला: " +
           error.message
       );
@@ -675,7 +678,7 @@ function WaiterDashboard() {
 
         {/* RIGHT CURRENT ORDER */}
 
-        <aside style={styles.orderSection}>
+        <aside style={styles.orderSection} id="order-section">
           <div style={styles.orderBox}>
             <div style={styles.orderHeader}>
               <div>
@@ -854,6 +857,11 @@ function WaiterDashboard() {
           </div>
         </aside>
       </div>
+
+      {/* MOBILE FLOATING CART BUTTON */}
+      <a href="#order-section" className="mobile-cart-fab">
+        🛒 View Order ({order.reduce((sum, item) => sum + item.quantity, 0)}) - ₹{total}
+      </a>
     </div>
   );
 }

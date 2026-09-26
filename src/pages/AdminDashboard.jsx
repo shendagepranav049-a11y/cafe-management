@@ -7,8 +7,9 @@ import {
   doc,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { db, auth } from "../firebase";
+import { auth, db } from "../firebase";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -59,10 +60,10 @@ function AdminDashboard() {
         status: "Completed",
       });
 
-      alert("Order Completed!");
+      toast.success("Order Completed!");
     } catch (error) {
       console.error(error);
-      alert("Order complete करताना error आला.");
+      toast.error("Order complete करताना error आला.");
     }
   };
 
@@ -79,10 +80,10 @@ function AdminDashboard() {
     try {
       await deleteDoc(doc(db, "orders", orderId));
 
-      alert("Order Deleted Successfully!");
+      toast.success("Order Deleted Successfully!");
     } catch (error) {
       console.error("Delete order error:", error);
-      alert("Order delete करताना error आला.");
+      toast.error("Order delete करताना error आला.");
     }
   };
 
@@ -114,7 +115,7 @@ function AdminDashboard() {
     const billWindow = window.open("", "_blank");
 
     if (!billWindow) {
-      alert("Please allow pop-ups in your browser.");
+      toast.error("Please allow pop-ups in your browser.");
       return;
     }
 

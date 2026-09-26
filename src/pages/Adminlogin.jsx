@@ -6,6 +6,7 @@ import {
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 function AdminLogin() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ function AdminLogin() {
     e.preventDefault();
 
     if (!email || !password) {
-      alert("Please enter email and password.");
+      toast.error("Please enter email and password.");
       return;
     }
 
@@ -33,12 +34,12 @@ function AdminLogin() {
 
       const user = userCredential.user;
 
-      const userDocRef = doc(db, "user", user.uid);
+      const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
         await signOut(auth);
-        alert("User role not found.");
+        toast.error("User role not found.");
         return;
       }
 
@@ -46,15 +47,15 @@ function AdminLogin() {
 
       if (userData.role !== "admin") {
         await signOut(auth);
-        alert("Access denied. This account is not an Admin.");
+        toast.error("Access denied. This account is not an Admin.");
         return;
       }
 
-      alert("Admin Login Successful!");
+      toast.success("Admin Login Successful!");
       navigate("/admin/dashboard");
     } catch (error) {
       console.error("Login error:", error);
-      alert("Login failed: " + error.message);
+      toast.error("Login failed: " + error.message);
     } finally {
       setLoading(false);
     }
