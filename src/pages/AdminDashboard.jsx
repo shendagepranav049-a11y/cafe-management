@@ -5,6 +5,9 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  query,
+  orderBy,
+  limit
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../firebase";
@@ -31,10 +34,16 @@ function AdminDashboard() {
     return () => unsubscribe();
   }, [navigate]);
 
-  // LOAD ORDERS
+  // LOAD ORDERS (Limited to 100 latest orders for performance)
   useEffect(() => {
-    const unsubscribe = onSnapshot(
+    const q = query(
       collection(db, "orders"),
+      orderBy("createdAt", "desc"),
+      limit(100)
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
       (snapshot) => {
         const data = snapshot.docs.map((item) => ({
           id: item.id,

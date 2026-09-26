@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, query, orderBy, limit } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { db, auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +13,8 @@ function WaiterDashboard() {
   const [order, setOrder] = useState([]);
   const [tableNumber, setTableNumber] = useState("");
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [showOrderHistory, setShowOrderHistory] = useState(false);
   const [orderHistory, setOrderHistory] = useState([]);
@@ -72,6 +74,7 @@ function WaiterDashboard() {
         setMenuData(groupedMenu);
       } catch (error) {
         console.error("Menu load error:", error);
+        setFetchError("Something went wrong. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -85,7 +88,12 @@ function WaiterDashboard() {
     try {
       setHistoryLoading(true);
 
-      const snapshot = await getDocs(collection(db, "orders"));
+      const q = query(
+        collection(db, "orders"),
+        orderBy("createdAt", "desc"),
+        limit(50)
+      );
+      const snapshot = await getDocs(q);
 
       const data = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -289,6 +297,25 @@ function WaiterDashboard() {
     );
   }
 
+  if (fetchError) {
+    return (
+      <div style={styles.loadingPage}>
+        <div style={styles.loadingIcon}>❌</div>
+        <h2 style={styles.loadingTitle}>{fetchError}</h2>
+        <button onClick={() => window.location.reload()} style={{ padding: "10px 20px", marginTop: "20px", cursor: "pointer", background: "#3b2418", color: "#fff", border: "none", borderRadius: "5px" }}>Retry</button>
+      </div>
+    );
+  }
+
+  const filteredMenuData = menuData
+    .map((category) => {
+      const filteredItems = category.items.filter((item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      return { ...category, items: filteredItems };
+    })
+    .filter((category) => category.items.length > 0);
+
   return (
     <div style={styles.page} className="dashboard-page">
       {/* HEADER */}
@@ -339,6 +366,18 @@ function WaiterDashboard() {
                 ? "Hide History"
                 : "Order History"}
             </button>
+          </div>
+
+          {/* SEARCH BAR */}
+          <div style={styles.searchContainer}>
+            <span style={styles.searchIcon}>🔍</span>
+            <input
+              type="text"
+              placeholder="Search menu items..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={styles.searchInput}
+            />
           </div>
 
           {/* TABLE SELECT */}
@@ -593,7 +632,12 @@ function WaiterDashboard() {
 
           {/* MENU CATEGORIES */}
 
-          {menuData.map((category) => (
+          {filteredMenuData.length === 0 && searchQuery !== "" ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#8a6a55" }}>
+              <h3>No items match your search.</h3>
+            </div>
+          ) : (
+            filteredMenuData.map((category) => (
             <section
               key={category.category}
               style={styles.categoryBox}
@@ -673,7 +717,7 @@ function WaiterDashboard() {
                 ))}
               </div>
             </section>
-          ))}
+          )))}
         </main>
 
         {/* RIGHT CURRENT ORDER */}
@@ -861,9 +905,14 @@ function WaiterDashboard() {
       {/* Spacer to prevent FAB overlap on mobile */}
       <div style={{ height: "90px", width: "100%" }}></div>
 
-      {/* MOBILE FLOATING CART BUTTON */}
+      {/* MOBILE FLOATING CART BUTTON (Round with badge) */}
       <a href="#order-section" className="mobile-cart-fab">
-        🛒 View Order ({order.reduce((sum, item) => sum + item.quantity, 0)}) - ₹{total}
+        🛒
+        {order.length > 0 && (
+          <span className="mobile-cart-badge">
+            {order.reduce((sum, item) => sum + item.quantity, 0)}
+          </span>
+        )}
       </a>
     </div>
   );
@@ -977,6 +1026,30 @@ const styles = {
     alignItems: "center",
     gap: "15px",
     marginBottom: "18px",
+  },
+
+  searchContainer: {
+    background: "#fffaf3",
+    borderRadius: "15px",
+    padding: "12px 18px",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginBottom: "20px",
+    boxShadow: "0 4px 12px rgba(43,27,20,0.1)",
+  },
+
+  searchIcon: {
+    fontSize: "18px",
+  },
+
+  searchInput: {
+    border: "none",
+    background: "transparent",
+    outline: "none",
+    fontSize: "16px",
+    width: "100%",
+    color: "#3b2418",
   },
 
   sectionTitle: {

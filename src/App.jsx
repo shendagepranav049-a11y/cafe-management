@@ -1,17 +1,19 @@
+import React, { Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
-import Home from "./pages/Home.jsx";
-import AdminLogin from "./pages/Adminlogin.jsx";
-import AdminDashboard from "./pages/AdminDashboard.jsx";
-import WaiterLogin from "./pages/waiterlogin.jsx";
-import WaiterDashboard from "./pages/waiterdashboard.jsx";
-import MenuSeeder from "./pages/MenuSeeder.jsx";
+const Home = React.lazy(() => import("./pages/Home.jsx"));
+const AdminLogin = React.lazy(() => import("./pages/Adminlogin.jsx"));
+const AdminDashboard = React.lazy(() => import("./pages/AdminDashboard.jsx"));
+const WaiterLogin = React.lazy(() => import("./pages/waiterlogin.jsx"));
+const WaiterDashboard = React.lazy(() => import("./pages/waiterdashboard.jsx"));
+const MenuSeeder = React.lazy(() => import("./pages/MenuSeeder.jsx"));
 
 function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-center" reverseOrder={false} />
+      <Suspense fallback={<div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", fontFamily: "Inter, sans-serif" }}><h3>Loading...</h3></div>}>
       <Routes>
 
         {/* MAIN PAGE */}
@@ -29,6 +31,7 @@ function App() {
         <Route path="/menu-seeder" element={<MenuSeeder />} />
 
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
