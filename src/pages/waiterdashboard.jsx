@@ -858,6 +858,9 @@ function WaiterDashboard() {
         </aside>
       </div>
 
+      {/* Spacer to prevent FAB overlap on mobile */}
+      <div style={{ height: "90px", width: "100%" }}></div>
+
       {/* MOBILE FLOATING CART BUTTON */}
       <a href="#order-section" className="mobile-cart-fab">
         🛒 View Order ({order.reduce((sum, item) => sum + item.quantity, 0)}) - ₹{total}
