@@ -34,7 +34,7 @@ function WaiterLogin() {
       const user = userCredential.user;
 
       // ✅ IMPORTANT: Firestore collection is "users"
-      const userDocRef = doc(db, "users", user.uid);
+      const userDocRef = doc(db, "user", user.uid);
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
