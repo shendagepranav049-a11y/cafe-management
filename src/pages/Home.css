@@ -1,0 +1,134 @@
+.home-container {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  background-image: url('https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=2000&q=85');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  font-family: "Inter", "Arial", sans-serif;
+}
+
+.home-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(25,15,10,0.85), rgba(70,40,20,0.7));
+  z-index: 1;
+}
+
+.home-content {
+  position: relative;
+  z-index: 2;
+  width: 420px;
+  max-width: 90%;
+  padding: 40px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 24px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  backdrop-filter: blur(12px);
+  text-align: center;
+}
+
+.home-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5c3317, #a86632);
+  color: white;
+  font-size: 38px;
+  box-shadow: 0 10px 25px rgba(92,51,23,0.4);
+}
+
+.home-title {
+  margin: 0;
+  color: #3b2112;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.home-subtitle {
+  margin: 8px 0 25px;
+  color: #8b6b52;
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.home-line {
+  width: 70px;
+  height: 4px;
+  margin: 0 auto 35px;
+  background: linear-gradient(90deg, #6b3e1e, #c58a52);
+  border-radius: 10px;
+}
+
+.home-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.home-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.home-btn:hover {
+  transform: translateY(-2px);
+}
+
+.home-btn:active {
+  transform: translateY(1px);
+}
+
+.admin-btn {
+  background: linear-gradient(135deg, #2b1b14, #4a2c20);
+  color: white;
+  box-shadow: 0 8px 20px rgba(43,27,20,0.3);
+}
+
+.admin-btn:hover {
+  box-shadow: 0 12px 25px rgba(43,27,20,0.4);
+}
+
+.waiter-btn {
+  background: linear-gradient(135deg, #c58a52, #a86632);
+  color: white;
+  box-shadow: 0 8px 20px rgba(168,102,50,0.3);
+}
+
+.waiter-btn:hover {
+  box-shadow: 0 12px 25px rgba(168,102,50,0.4);
+}
+
+.btn-icon {
+  font-size: 20px;
+}
+
+@media (max-width: 480px) {
+  .home-content {
+    padding: 30px 20px;
+  }
+  .home-title {
+    font-size: 28px;
+  }
+}

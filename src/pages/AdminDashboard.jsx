@@ -283,10 +283,10 @@ function AdminDashboard() {
   });
 
   return (
-    <div style={styles.page}>
+    <div style={styles.page} className="dashboard-page">
 
       {/* HEADER */}
-      <header style={styles.header}>
+      <header style={styles.header} className="dashboard-header">
         <div style={styles.brandSection}>
           <div style={styles.logo}>☕</div>
 
@@ -301,14 +301,14 @@ function AdminDashboard() {
           </div>
         </div>
 
-        <div style={styles.adminBadge}>
+        <div style={styles.adminBadge} className="dashboard-header-right">
           <span style={styles.adminIcon}>👤</span>
           <span>Admin</span>
         </div>
       </header>
 
       {/* WELCOME BAR */}
-      <div style={styles.welcomeBox}>
+      <div style={styles.welcomeBox} className="welcome-box">
         <div>
           <h2 style={styles.welcomeTitle}>
             Good day, Admin! ☕
@@ -390,7 +390,7 @@ function AdminDashboard() {
                 )}
 
                 {/* ORDER INFO */}
-                <div style={styles.infoGrid}>
+                <div style={styles.infoGrid} className="info-grid">
 
                   {/* TABLE */}
                   <div style={styles.infoBox}>
@@ -430,6 +430,7 @@ function AdminDashboard() {
                       <div
                         key={index}
                         style={styles.itemRow}
+                        className="item-row"
                       >
                         <div>
                           <strong
@@ -447,6 +448,7 @@ function AdminDashboard() {
 
                         <div
                           style={styles.itemRight}
+                          className="item-right"
                         >
                           <span
                             style={styles.quantity}

@@ -287,10 +287,10 @@ function WaiterDashboard() {
   }
 
   return (
-    <div style={styles.page}>
+    <div style={styles.page} className="dashboard-page">
       {/* HEADER */}
 
-      <header style={styles.header}>
+      <header style={styles.header} className="dashboard-header">
         <div style={styles.brandSection}>
           <div style={styles.logo}>☕</div>
 
@@ -305,18 +305,18 @@ function WaiterDashboard() {
           </div>
         </div>
 
-        <div style={styles.waiterBadge}>
+        <div style={styles.waiterBadge} className="dashboard-header-right">
           👤 Waiter
         </div>
       </header>
 
       {/* MAIN CONTENT */}
 
-      <div style={styles.mainLayout}>
+      <div style={styles.mainLayout} className="waiter-layout">
         {/* LEFT MENU */}
 
         <main style={styles.menuSection}>
-          <div style={styles.menuHeading}>
+          <div style={styles.menuHeading} className="menu-heading">
             <div>
               <h2 style={styles.sectionTitle}>
                 🍽️ Menu
@@ -611,7 +611,7 @@ function WaiterDashboard() {
                 </div>
               </div>
 
-              <div style={styles.itemsGrid}>
+              <div style={styles.itemsGrid} className="items-grid">
                 {category.items.map((item) => (
                   <div
                     key={item.name}
@@ -733,6 +733,7 @@ function WaiterDashboard() {
                         style={
                           styles.orderItemTop
                         }
+                        className="order-item-top"
                       >
                         <div
                           style={

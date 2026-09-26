@@ -1,37 +1,37 @@
-import AdminLogin from "./Adminlogin.jsx";
-import WaiterLogin from "./waiterlogin.jsx";
+import { useNavigate } from "react-router-dom";
+import "./Home.css";
 
 function Home() {
-  return (
-    <div
-      style={{
-        width: "100%",
-        minHeight: "100vh",
-      }}
-    >
-      {/* ADMIN LOGIN */}
-      <section
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <AdminLogin />
-      </section>
+  const navigate = useNavigate();
 
-      {/* WAITER LOGIN */}
-      <section
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <WaiterLogin />
-      </section>
+  return (
+    <div className="home-container">
+      <div className="home-overlay"></div>
+      
+      <div className="home-content">
+        <div className="home-logo">☕</div>
+        <h1 className="home-title">Cafe Crush</h1>
+        <p className="home-subtitle">Restaurant Management System</p>
+        <div className="home-line"></div>
+
+        <div className="home-buttons">
+          <button 
+            className="home-btn admin-btn"
+            onClick={() => navigate('/admin/login')}
+          >
+            <span className="btn-icon">👨‍💼</span>
+            Admin Portal
+          </button>
+          
+          <button 
+            className="home-btn waiter-btn"
+            onClick={() => navigate('/waiter/login')}
+          >
+            <span className="btn-icon">🍽️</span>
+            Waiter Portal
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
